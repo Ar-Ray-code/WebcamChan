@@ -1,5 +1,5 @@
 # WebcamChan
-UVCカメラとして動作するM5StackCoreS3用ファームウェア（ｳｪﾌﾞｶﾒﾁｬﾝ）
+UVCカメラとして動作するM5StackCoreS3用ファームウェア（ｳｪﾌﾞｶﾑﾁｬﾝ）
 
 M5StackCoreS3-embedded super-kawaii UVC device.
 
