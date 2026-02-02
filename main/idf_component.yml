@@ -1,0 +1,7 @@
+## IDF Component Manager Manifest File
+dependencies:
+  espressif/m5stack_core_s3: "^3.0.0"
+  espressif/esp32-camera: "^2.1.0"
+  espressif/usb_device_uvc: "^1.0.0"
+  idf:
+    version: ">=5.4.0"

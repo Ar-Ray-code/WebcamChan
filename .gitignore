@@ -1,0 +1,16 @@
+build/
+cmake-build-*/
+.idf.py
+
+managed_components/
+
+sdkconfig.old
+sdkconfig.old.*
+dependencies.lock
+
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
