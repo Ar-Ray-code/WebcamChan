@@ -53,7 +53,30 @@ esptool.py --chip esp32s3 --port /dev/ttyACM0 --baud 921600 \
 
 ### カメラ起動
 
+`/dev/video2` は接続されたカメラデバイスに置き換えてください。
+
 ```bash
-ffplay -f v4l2 -input_format mjpeg -video_size 320x240 -framerate 30
+ffplay -f v4l2 -input_format mjpeg -video_size 320x240 -framerate 30 /dev/video2
 ```
 
+### 表情変更
+
+`/dev/video2` は接続されたカメラデバイスに置き換えてください。
+
+笑顔 😊
+
+```bash
+v4l2-ctl -d /dev/video2 --set-ctrl brightness=250
+```
+
+真顔
+
+```bash
+v4l2-ctl -d /dev/video2 --set-ctrl brightness=128
+```
+
+ガッカリ 😑
+
+```bash
+v4l2-ctl -d /dev/video2 --set-ctrl brightness=0
+```
