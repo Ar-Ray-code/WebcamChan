@@ -16,15 +16,11 @@
 #include "class/video/video.h"
 #include "usb_descriptors.h"
 #include "uvc_ctrl_registry.h"
+#include "uvc_ctrl_params.h"
 
 /* ======================================================================
  * Part 1: Configuration Descriptor with Processing Unit
  * ====================================================================== */
-
-/* Entity IDs for our custom descriptor topology */
-#define MY_ENTITY_CAMERA_TERMINAL  0x01
-#define MY_ENTITY_PROCESSING_UNIT  0x02
-#define MY_ENTITY_OUTPUT_TERMINAL  0x03
 
 /* Processing Unit descriptor (UVC 1.5, bControlSize=3)
  *
@@ -70,15 +66,15 @@ static uint8_t const my_desc_fs_configuration[] = {
         UVC_CLOCK_FREQUENCY,
         ITF_NUM_VIDEO_STREAMING),
     /* Camera Terminal (entity 1) */
-    TUD_VIDEO_DESC_CAMERA_TERM(MY_ENTITY_CAMERA_TERMINAL, 0, 0, 0, 0, 0, 0),
+    TUD_VIDEO_DESC_CAMERA_TERM(UVC_ENTITY_ID_CAMERA_TERMINAL, 0, 0, 0, 0, 0, 0),
     /* Processing Unit (entity 2), source = Camera Terminal */
     TUD_VIDEO_DESC_PROCESSING_UNIT(
-        MY_ENTITY_PROCESSING_UNIT, MY_ENTITY_CAMERA_TERMINAL,
+        UVC_ENTITY_ID_PROCESSING_UNIT, UVC_ENTITY_ID_CAMERA_TERMINAL,
         PU_BM_CTRL_0, PU_BM_CTRL_1, PU_BM_CTRL_2),
     /* Output Terminal (entity 3), source = Processing Unit */
     TUD_VIDEO_DESC_OUTPUT_TERM(
-        MY_ENTITY_OUTPUT_TERMINAL, VIDEO_TT_STREAMING, 0,
-        MY_ENTITY_PROCESSING_UNIT, 0),
+        UVC_ENTITY_ID_OUTPUT_TERMINAL, VIDEO_TT_STREAMING, 0,
+        UVC_ENTITY_ID_PROCESSING_UNIT, 0),
 
     /* ---- Video Streaming Interface (alt 0) ---- */
     TUD_VIDEO_DESC_STD_VS(ITF_NUM_VIDEO_STREAMING, 0, 0, 4),
@@ -88,7 +84,7 @@ static uint8_t const my_desc_fs_configuration[] = {
             + (UVC_FRAME_NUM * TUD_VIDEO_DESC_CS_VS_FRM_MJPEG_CONT_LEN)
             + TUD_VIDEO_DESC_CS_VS_COLOR_MATCHING_LEN,
         MY_EPNUM_VIDEO_IN, 0,
-        MY_ENTITY_OUTPUT_TERMINAL,
+        UVC_ENTITY_ID_OUTPUT_TERMINAL,
         0, 0, 0,
         0),
     TUD_VIDEO_DESC_CS_VS_FMT_MJPEG(

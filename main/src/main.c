@@ -1,9 +1,6 @@
-#include <stdio.h>
 #include <string.h>
-#include <stdarg.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "freertos/semphr.h"
 #include "esp_camera.h"
 #include "esp_timer.h"
 #include "esp_heap_caps.h"
@@ -17,32 +14,11 @@
 #include "uvc_ctrl_state.h"
 #include "avatar.h"
 
-// UVC Stream Configuration (must match usb_device_uvc component config)
-#define UVC_FRAME_WIDTH     320
-#define UVC_FRAME_HEIGHT    240
-#define UVC_FRAME_RATE      30  // Device reports 30fps for 320x240
-
 // UVC Buffer size (must be larger than single frame)
 #define UVC_BUFFER_SIZE     (40 * 1024)
 
-// RGB565 byte order adjustment before JPEG conversion (usually OFF).
-#define UVC_RGB565_BYTE_SWAP 0
-
-// Display dimensions
-#define DISPLAY_WIDTH   320
-#define DISPLAY_HEIGHT  240
-
 // LVGL UI objects
-static lv_obj_t *status_label = NULL;
-static lv_obj_t *fps_label = NULL;
-static lv_obj_t *info_label = NULL;
-static lv_obj_t *log_label = NULL;
 static lv_obj_t *camera_dot = NULL;
-
-// Log buffer for LCD display
-#define LOG_LINES 6
-#define LOG_LINE_LEN 40
-static char log_buffer[LOG_LINES][LOG_LINE_LEN];
 
 static volatile int g_brightness = 128;
 static int current_brightness = -1;
@@ -61,9 +37,6 @@ static void uvc_ctrl_value_log(const char *name, int64_t value)
 
 // UVC streaming state
 static volatile bool uvc_streaming = false;
-static volatile uint32_t frame_count = 0;
-static int64_t last_fps_time = 0;
-static float current_fps = 0.0f;
 static uint8_t *uvc_buffer = NULL;
 static uint8_t *jpeg_buffer = NULL;
 static size_t jpeg_buffer_size = 0;
@@ -71,7 +44,6 @@ static uvc_fb_t uvc_frame;
 
 // Keep track of current camera frame for returning
 static camera_fb_t *current_camera_fb = NULL;
-static bool first_frame_logged = false;
 
 static esp_err_t init_camera(void)
 {
@@ -97,20 +69,9 @@ static esp_err_t init_camera(void)
 }
 
 
-static inline void rgb565_swap_bytes(uint16_t *buf, size_t pixel_count)
-{
-    for (size_t i = 0; i < pixel_count; i++) {
-        uint16_t v = buf[i];
-        buf[i] = (uint16_t)((v >> 8) | (v << 8));
-    }
-}
-
 static esp_err_t uvc_input_start_cb(uvc_format_t format, int width, int height, int rate, void *cb_ctx)
 {
     uvc_streaming = true;
-    first_frame_logged = false;
-    frame_count = 0;
-    last_fps_time = esp_timer_get_time();
     return ESP_OK;
 }
 
@@ -148,14 +109,8 @@ static uvc_fb_t *uvc_input_fb_get_cb(void *cb_ctx)
         return NULL;
     }
 
-    // Store JPEG buffer pointer for cleanup later
     jpeg_buffer = out_buf;
     jpeg_buffer_size = out_len;
-
-    // Log first frame info for each session
-    if (!first_frame_logged) {
-        first_frame_logged = true;
-    }
 
     // Fill UVC frame structure with JPEG data
     uvc_frame.buf = jpeg_buffer;
@@ -181,8 +136,6 @@ static void uvc_input_fb_return_cb(uvc_fb_t *fb, void *cb_ctx)
         esp_camera_fb_return(current_camera_fb);
         current_camera_fb = NULL;
     }
-
-    frame_count++;
 }
 
 // Called when host stops streaming
@@ -238,17 +191,10 @@ static esp_err_t init_usb_uvc(void)
 
 static void create_ui(void)
 {
-    memset(log_buffer, 0, sizeof(log_buffer));
-
     bsp_display_lock(0);
     lv_obj_set_style_bg_color(lv_scr_act(), lv_color_hex(0x000000), 0);
 
-    status_label = NULL;
-    fps_label = NULL;
-    info_label = NULL;
-
     stackchanface_init(lv_scr_act());
-    log_label = NULL;
 
     camera_dot = lv_obj_create(lv_scr_act());
     lv_obj_set_size(camera_dot, 8, 8);
@@ -273,18 +219,6 @@ static void ui_task(void *arg)
     static int64_t last_blink_time = 0;
 
     for (;;) {
-        // Update FPS calculation (for logging purposes only, no display)
-        if (uvc_streaming) {
-            int64_t now = esp_timer_get_time();
-            int64_t elapsed = now - last_fps_time;
-
-            if (elapsed >= 1000000) {  // 1 second
-                current_fps = (float)frame_count * 1000000.0f / elapsed;
-                frame_count = 0;
-                last_fps_time = now;
-            }
-        }
-
         // Blink red dot while camera is streaming (1Hz)
         if (uvc_streaming) {
             int64_t now = esp_timer_get_time();
@@ -337,10 +271,6 @@ void app_main(void)
     // Initialize camera
     esp_err_t err = init_camera();
     if (err != ESP_OK) {
-        bsp_display_lock(0);
-        lv_obj_set_style_text_color(status_label, lv_color_hex(0xff0000), 0);
-        bsp_display_unlock();
-
         while (1) {
             vTaskDelay(pdMS_TO_TICKS(1000));
         }
@@ -367,10 +297,6 @@ void app_main(void)
 
     err = init_usb_uvc();
     if (err != ESP_OK) {
-        bsp_display_lock(0);
-        lv_obj_set_style_text_color(status_label, lv_color_hex(0xff0000), 0);
-        bsp_display_unlock();
-
         while (1) {
             vTaskDelay(pdMS_TO_TICKS(1000));
         }

@@ -4,7 +4,6 @@
 
 static const uvc_ctrl_entry_t *s_entries = NULL;
 static size_t s_entry_count = 0;
-static void (*s_logger)(const char *name) = NULL;
 
 void uvc_ctrl_registry_register(const uvc_ctrl_entry_t *entries, size_t count)
 {
@@ -75,9 +74,6 @@ int uvc_ctrl_registry_handle(uint8_t entity_id,
         if (stage == CONTROL_STAGE_DATA) {
             if (entry->on_set) {
                 entry->on_set(entry->name, buf, len);
-            }
-            if (s_logger) {
-                s_logger(entry->name);
             }
         }
         return VIDEO_ERROR_NONE;
