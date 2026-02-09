@@ -59,18 +59,6 @@ static void uvc_ctrl_value_log(const char *name, int64_t value)
     }
 }
 
-int tud_video_entity_control_cb(uint_fast8_t ctl_idx,
-                                uint8_t entity_id,
-                                uint8_t control_selector,
-                                uint8_t request,
-                                uint8_t stage,
-                                uint8_t *buf,
-                                uint16_t len)
-{
-    (void)ctl_idx;
-    return uvc_ctrl_registry_handle(entity_id, control_selector, request, stage, buf, len);
-}
-
 // UVC streaming state
 static volatile bool uvc_streaming = false;
 static volatile uint32_t frame_count = 0;
