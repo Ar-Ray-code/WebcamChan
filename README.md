@@ -69,7 +69,7 @@ ffplay -f v4l2 -input_format mjpeg -video_size 320x240 -framerate 30 /dev/video2
 v4l2-ctl -d /dev/video2 --set-ctrl brightness=250
 ```
 
-真顔
+真顔 😐
 
 ```bash
 v4l2-ctl -d /dev/video2 --set-ctrl brightness=128
